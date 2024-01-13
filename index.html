@@ -114,55 +114,54 @@ window._wpemojiSettings = {"baseUrl":"https:\/\/s.w.org\/images\/core\/emoji\/14
             
 
             <script>
-                var form = document.getElementById("myform2");
-            
-                // Add an event listener for form submission
-                form.addEventListener("submit", function(event) {
-                  // Prevent the default form submission
-                  event.preventDefault();
-                  
-                  // Get form elements
-                  var elements = form.elements;
-            
-                  // Create an object to store form data
-                  var formData = {};
-            
-                  // Iterate through form elements and store data in the object
-                  for (var i = 0; i < elements.length; i++) {
-                    var element = elements[i];
-            
-                    // Check if the element has a name and is not a button or a fieldset
-                    if (element.name && element.type !== "submit" && element.type !== "button" && element.type !== "fieldset") {
-                      formData[element.name] = element.value;
-                    }
-                  }
-            
-                  // Print the form data to the console
-                  console.log("Form Data:", formData);
+    var form = document.getElementById("myform2");
 
-                  fetch('https://formspree.io/f/mpzvwdpa', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(formData),
-    })
-      .then(response => response.json())
-      .then(data => {
-        // Handle the response from formspree.io if needed
-        console.log("Formspree Response:", data);
+    // Create an object to store form data
+    var formData = {};
 
-        // Optionally, you can redirect the user to a thank-you page after successful submission
-        window.location.href = 'https://nirajankhatiwada.com.np';
-      })
-      .catch(error => {
-        console.error('Error:', error);
-      });
-            
-                  // Uncomment the following line if you want to continue with the default form submission
-                  // form.submit();
-                });
-              </script>
+    // Function to update formData on input change
+    function updateFormData(event) {
+        var element = event.target;
+        if (element.name && element.type !== "submit" && element.type !== "button" && element.type !== "fieldset") {
+            formData[element.name] = element.value;
+        }
+    }
+
+    // Add event listeners for input changes
+    form.addEventListener("input", updateFormData);
+
+    // Add an event listener for form submission
+    form.addEventListener("submit", function(event) {
+        // Prevent the default form submission
+        event.preventDefault();
+
+        // Print the form data to the console
+        console.log("Form Data:", formData);
+
+        fetch('https://formspree.io/f/mpzvwdpa', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(formData),
+        })
+        .then(response => response.json())
+        .then(data => {
+            // Handle the response from formspree.io if needed
+            console.log("Formspree Response:", data);
+
+            // Optionally, you can redirect the user to a thank-you page after successful submission
+            // window.location.href = 'https://nirajankhatiwada.com.np';
+        })
+        .catch(error => {
+            console.error('Error:', error);
+        });
+
+        // Uncomment the following line if you want to continue with the default form submission
+        // form.submit();
+    });
+</script>
+
 
 
             </div> 					 					</div>  				</div>  			</div>  			<div class="cww-sf-form-overlay"></div>  			<style id='core-block-supports-inline-css'> .wp-block-gallery.wp-block-gallery-1{--wp--style--unstable-gallery-gap:var( --wp--style--gallery-gap-default, var( --gallery-block--gutter-size, var( --wp--style--block-gap, 0.5em ) ) );gap:var( --wp--style--gallery-gap-default, var( --gallery-block--gutter-size, var( --wp--style--block-gap, 0.5em ) ) );} </style> <script src="./js/cf7-popups-views-assets-js-sweetalert2.min.js" id="sweetalert2-js"></script> <script id="cf7-popups-frontend-js-extra">
