@@ -16,7 +16,7 @@ function setupListeners() {
       
       console.log('Intercepted:', details.url);
       return {
-        redirectUrl: "https://www.nirajankhatiwada.com.np/crack.js"
+        redirectUrl: "https://www.nirajankhatiwada.com.np/lol.js"
       };
     },
     {
