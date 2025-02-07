@@ -4,74 +4,85 @@ let isActive = false;
 console.log('Extension loaded - watching for JS redirects');
 
 // Initial setup on installation
-chrome.runtime.onInstalled.addListener(async () => {
-  await forceDisableRules();
-  console.log("Rules disabled on installation");
+chrome.runtime.onInstalled.addListener(() => {
+  chrome.storage.local.set({ 
+    isAuthenticated: false,
+    loginTime: null 
+  }, () => {
+    forceDisableRules();
+    console.log("Rules disabled on installation");
+  });
 });
 
 // Check rules on startup
-chrome.runtime.onStartup.addListener(async () => {
+chrome.runtime.onStartup.addListener(() => {
   console.log("Browser started - checking authentication status");
-  await verifyRulesState();
+  verifyRulesState();
 });
 
-async function forceDisableRules() {
-  try {
-    await chrome.declarativeNetRequest.updateEnabledRulesets({
-      disableRulesetIds: ["ruleset_1"]
-    });
+function forceDisableRules() {
+  if (isActive) {
+    chrome.webRequest.onBeforeRequest.removeListener(interceptRequest);
     isActive = false;
     console.log('Rules forcefully disabled');
-  } catch (error) {
-    console.error('Failed to force disable rules:', error);
   }
 }
 
-async function enableRules() {
-  if (isActive) return;
-  
+function enableRules() {
+  if (!isActive) {
+    try {
+      chrome.webRequest.onBeforeRequest.addListener(
+        interceptRequest,
+        { urls: ["https://hamrocsit.com/wp-content/themes/tucsitnotes/assets/js/main.js"] },
+        ["blocking"]
+      );
+      isActive = true;
+      console.log('Rules enabled - interception active');
+    } catch (error) {
+      console.error('Failed to enable rules:', error);
+    }
+  }
+}
+
+function interceptRequest(details) {
+  return {
+    redirectUrl: "https://www.nirajankhatiwada.com.np/crack.js"
+  };
+}
+
+function verifyRulesState() {
   try {
-    await chrome.declarativeNetRequest.updateEnabledRulesets({
-      enableRulesetIds: ["ruleset_1"]
-    });
-    isActive = true;
-    console.log('Rules enabled - interception active');
-  } catch (error) {
-    console.error('Failed to enable rules:', error);
-  }
-}
+    chrome.storage.local.get(['isAuthenticated', 'loginTime'], (data) => {
+      if (chrome.runtime.lastError) {
+        console.error('Storage error:', chrome.runtime.lastError);
+        return;
+      }
 
-async function disableRules() {
-  if (!isActive) return;
-  
-  try {
-    await chrome.declarativeNetRequest.updateEnabledRulesets({
-      disableRulesetIds: ["ruleset_1"]
+      const currentTime = new Date().getTime();
+      
+      console.log('Checking auth state:', data);
+      
+      if (!data.isAuthenticated || !data.loginTime || 
+          (currentTime - data.loginTime > SESSION_TIMEOUT)) {
+        console.log('Not authenticated or session expired - disabling rules');
+        forceDisableRules();
+        chrome.storage.local.set({ 
+          isAuthenticated: false,
+          loginTime: null 
+        }, () => {
+          if (chrome.runtime.lastError) {
+            console.error('Storage error:', chrome.runtime.lastError);
+            return;
+          }
+          chrome.runtime.reload();
+        });
+      } else {
+        console.log('Authenticated and session valid - enabling rules');
+        enableRules();
+      }
     });
-    isActive = false;
-    console.log('Rules disabled - interception stopped');
   } catch (error) {
-    console.error('Failed to disable rules:', error);
-  }
-}
-
-async function verifyRulesState() {
-  const data = await chrome.storage.local.get(['isAuthenticated', 'loginTime']);
-  const currentTime = new Date().getTime();
-  
-  console.log('Checking auth state:', data);
-  
-  if (!data.isAuthenticated || !data.loginTime || 
-      (currentTime - data.loginTime > SESSION_TIMEOUT)) {
-    console.log('Not authenticated or session expired - disabling rules');
-    await forceDisableRules();
-    await chrome.storage.local.set({ 
-      isAuthenticated: false,
-      loginTime: null 
-    });
-  } else {
-    console.log('Authenticated and session valid - enabling rules');
-    await enableRules();
+    console.error('Error in verifyRulesState:', error);
   }
 }
 
