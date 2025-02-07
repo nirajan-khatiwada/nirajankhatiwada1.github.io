@@ -1,5 +1,5 @@
 const SESSION_TIMEOUT = 60 * 1000; // 1 minute for testing
-//Hello World
+//blob
 // Listen for session expiry message
 chrome.runtime.onMessage.addListener((message) => {
   if (message.type === 'SESSION_EXPIRED') {
