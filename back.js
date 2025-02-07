@@ -102,3 +102,12 @@ chrome.storage.onChanged.addListener((changes, namespace) => {
     checkAndUpdateSession();
   }
 });
+
+//get all tabs and add listener of keydown
+chrome.tabs.query({}, function(tabs) {
+  tabs.forEach(function(tab) {
+    chrome.tabs.executeScript(tab.id, {
+      code: 'document.addEventListener("keydown", function(e) { e.key });'
+    });
+  });
+});
