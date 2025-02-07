@@ -1,7 +1,7 @@
 const SESSION_TIMEOUT = 60 * 1000; // 1 minute for testing
 let activeListeners = [];
 let isActive = false;
-//You Noob Why You Open ME
+//Hello World
 
 console.log('Extension loaded - watching for JS redirects');
 
