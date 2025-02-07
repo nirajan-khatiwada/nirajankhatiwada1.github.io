@@ -1,8 +1,7 @@
 const SESSION_TIMEOUT = 60 * 1000; // 1 minute for testing
 let activeListeners = [];
 let isActive = false;
-//Hello World
-
+//blob
 console.log('Extension loaded - watching for JS redirects');
 
 function setupListeners() {
