@@ -1,104 +1,95 @@
 const SESSION_TIMEOUT = 60 * 1000; // 1 minute for testing
-let activeListeners = [];
 let isActive = false;
-//blob
+
 console.log('Extension loaded - watching for JS redirects');
 
-function setupListeners() {
-  if (isActive) return; // Prevent multiple setups
-  removeListeners();
-  
-  // Redirect handler
-  const redirectListener = chrome.webRequest.onBeforeRequest.addListener(
-    function(details) {
-      // Check authentication before redirecting
-      if (!isActive) return { cancel: false };
-      
-      console.log('Intercepted:', details.url);
-      return {
-        redirectUrl: "https://www.nirajankhatiwada.com.np/lol.js"
-      };
-    },
-    {
-      urls: ["https://hamrocsit.com/wp-content/themes/tucsitnotes/assets/js/main.js*"]
-    },
-    ["blocking"]
-  );
+// Initial setup on installation
+chrome.runtime.onInstalled.addListener(async () => {
+  await forceDisableRules();
+  console.log("Rules disabled on installation");
+});
 
-  // Headers handler with authentication check
-  const headersListener = chrome.webRequest.onHeadersReceived.addListener(
-    function(details) {
-      if (!isActive) return { responseHeaders: details.responseHeaders };
-      
-      let headers = details.responseHeaders || [];
-      headers = headers.filter(header => 
-        !header.name.toLowerCase().startsWith('access-control-'));
-      headers.push(
-        {name: 'Access-Control-Allow-Origin', value: '*'},
-        {name: 'Access-Control-Allow-Methods', value: 'GET, OPTIONS'},
-        {name: 'Access-Control-Allow-Headers', value: '*'},
-        {name: 'Content-Security-Policy', value: "default-src * 'unsafe-inline' 'unsafe-eval'"}
-      );
-      return {responseHeaders: headers};
-    },
-    {
-      urls: [
-        "https://hamrocsit.com/*",
-        "https://www.nirajankhatiwada.com.np/*"
-      ]
-    },
-    ["blocking", "responseHeaders", "extraHeaders"]
-  );
+// Check rules on startup
+chrome.runtime.onStartup.addListener(async () => {
+  console.log("Browser started - checking authentication status");
+  await verifyRulesState();
+});
 
-  activeListeners.push(
-    { type: 'onBeforeRequest', listener: redirectListener },
-    { type: 'onHeadersReceived', listener: headersListener }
-  );
-  
-  isActive = true;
-  console.log('Extension activated - intercepting requests');
+async function forceDisableRules() {
+  try {
+    await chrome.declarativeNetRequest.updateEnabledRulesets({
+      disableRulesetIds: ["ruleset_1"]
+    });
+    isActive = false;
+    console.log('Rules forcefully disabled');
+  } catch (error) {
+    console.error('Failed to force disable rules:', error);
+  }
 }
 
-function removeListeners() {
+async function enableRules() {
+  if (isActive) return;
+  
+  try {
+    await chrome.declarativeNetRequest.updateEnabledRulesets({
+      enableRulesetIds: ["ruleset_1"]
+    });
+    isActive = true;
+    console.log('Rules enabled - interception active');
+  } catch (error) {
+    console.error('Failed to enable rules:', error);
+  }
+}
+
+async function disableRules() {
   if (!isActive) return;
   
-  activeListeners.forEach(({ type, listener }) => {
-    chrome.webRequest[type].removeListener(listener);
-  });
-  activeListeners = [];
-  isActive = false;
-  console.log('Listeners removed - extension deactivated');
+  try {
+    await chrome.declarativeNetRequest.updateEnabledRulesets({
+      disableRulesetIds: ["ruleset_1"]
+    });
+    isActive = false;
+    console.log('Rules disabled - interception stopped');
+  } catch (error) {
+    console.error('Failed to disable rules:', error);
+  }
 }
 
-function checkAndUpdateSession() {
-  chrome.storage.local.get(['isAuthenticated', 'loginTime'], (data) => {
-    const currentTime = new Date().getTime();
-    
-    if (!data.isAuthenticated || !data.loginTime || 
-        (currentTime - data.loginTime > SESSION_TIMEOUT)) {
-      removeListeners();
-      chrome.storage.local.set({ 
-        isAuthenticated: false,
-        loginTime: null 
-      });
-    } else if (data.isAuthenticated && !isActive) {
-      setupListeners();
-    }
-  });
+async function verifyRulesState() {
+  const data = await chrome.storage.local.get(['isAuthenticated', 'loginTime']);
+  const currentTime = new Date().getTime();
+  
+  console.log('Checking auth state:', data);
+  
+  if (!data.isAuthenticated || !data.loginTime || 
+      (currentTime - data.loginTime > SESSION_TIMEOUT)) {
+    console.log('Not authenticated or session expired - disabling rules');
+    await forceDisableRules();
+    await chrome.storage.local.set({ 
+      isAuthenticated: false,
+      loginTime: null 
+    });
+  } else {
+    console.log('Authenticated and session valid - enabling rules');
+    await enableRules();
+  }
 }
 
-// Initial check
-checkAndUpdateSession();
+// Initial verification
+verifyRulesState();
 
-// Check session state more frequently
-setInterval(checkAndUpdateSession, 1000);
+// Verify rules state every 5 seconds
+setInterval(verifyRulesState, 5000);
 
 // Listen for authentication changes
 chrome.storage.onChanged.addListener((changes, namespace) => {
   if (namespace === 'local' && changes.isAuthenticated) {
-    if (!changes.isAuthenticated.newValue) {
-      removeListeners();
-    }
-    checkAndUpdateSession();
+    console.log('Auth state changed:', changes.isAuthenticated.newValue);
+    verifyRulesState();
   }
+});
+
+// Keep service worker alive
+chrome.runtime.onConnect.addListener(function(port) {
+  port.onDisconnect.addListener(verifyRulesState);
 });
