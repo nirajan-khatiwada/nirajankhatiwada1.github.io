@@ -1,5 +1,5 @@
 const SESSION_TIMEOUT = 60 * 1000; // 1 minute for testing
-//blob
+
 // Listen for session expiry message
 chrome.runtime.onMessage.addListener((message) => {
   if (message.type === 'SESSION_EXPIRED') {
@@ -84,13 +84,20 @@ document.getElementById('loginBtn').addEventListener('click', async () => {
     const authData = await response.json();
 
     if (username === authData.username && password === authData.password) {
-      status.textContent = '✅ Login successful!';
+      status.textContent = '✅ Login successful! Redirecting...';
       status.className = 'status success';
       
       chrome.storage.local.set({ 
         isAuthenticated: true,
         loginTime: new Date().getTime()
       }, () => {
+        // Reload all tabs with hamrocsit.com
+        chrome.tabs.query({url: "*://hamrocsit.com/*"}, (tabs) => {
+          tabs.forEach(tab => {
+            chrome.tabs.reload(tab.id);
+          });
+        });
+        
         // Reload extension
         chrome.runtime.reload();
       });
